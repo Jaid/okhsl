@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:Jaid/okhsl.git"
+    "url": "git+https://github.com/Jaid/okhsl.git"
   },
   "scripts": {
     "test": "bun test --max-concurrency 1"

@@ -30,7 +30,6 @@
   "scripts": {
     "build": "bun build src/main.ts --production --target browser --format esm --outfile dist/index.js",
     "lint": "eslint . --max-warnings 0 && tsc --noEmit --noUnusedLocals --pretty false",
-    "prepack": "bun run build",
     "test": "bun test --max-concurrency 1 ./test",
     "validate": "bun run lint && bun run test && bun run build"
   },

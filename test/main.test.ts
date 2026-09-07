@@ -2,7 +2,7 @@ import type {Channels, ChannelsWithAlpha} from '../src/main.ts'
 
 import {describe, expect, test} from 'bun:test'
 
-import {okhsl_to_srgb, srgb_to_okhsl} from '../src/conversion.ts'
+import {okhslToSrgb, srgbToOkhsl} from '../src/conversion.ts'
 import okhsl, {bytes, css, fromHex, fromHsl, fromRgb, hsl, okhsl as named} from '../src/main.ts'
 
 describe('specified examples', () => {
@@ -116,8 +116,8 @@ test('unquantized interior round trips agree with the reference math', () => {
   for (let h = 0; h < 360; h += 7) {
     for (const s of [0.1, 0.5, 0.8, 0.95]) {
       for (const l of [0.1, 0.4, 0.7, 0.9]) {
-        const [r, g, b] = okhsl_to_srgb(h / 360, s, l)
-        const result = srgb_to_okhsl(r, g, b)
+        const [r, g, b] = okhslToSrgb(h / 360, s, l)
+        const result = srgbToOkhsl(r, g, b)
         const hueError = Math.abs(result[0] * 360 - h)
         expect(Math.min(hueError, 360 - hueError)).toBeLessThan(0.001)
         expect(result[1]).toBeCloseTo(s, 4)

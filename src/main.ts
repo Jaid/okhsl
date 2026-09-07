@@ -1,4 +1,4 @@
-import {hsl_to_rgb, okhsl_to_srgb, rgb_to_hsl, srgb_to_okhsl} from './conversion.ts'
+import {hslToRgb, okhslToSrgb, rgbToHsl, srgbToOkhsl} from './conversion.ts'
 
 export type Channels = [number, number, number]
 export type ChannelsWithAlpha = [number, number, number, number]
@@ -86,7 +86,7 @@ function unpackHsl(hOrInput: HslInput | number, sOrAlpha?: number, l?: number, a
   return [input.h, input.s, input.l, sOrAlpha]
 }
 function rgb(h: unknown, s: unknown, l: unknown): [number, number, number] {
-  return okhsl_to_srgb(hue(h) / 360, clamp(s, 100) / 100, clamp(l, 100) / 100)
+  return okhslToSrgb(hue(h) / 360, clamp(s, 100) / 100, clamp(l, 100) / 100)
     .map(channel => clamp(channel, 255)) as [number, number, number]
 }
 function appendAlpha(channels: Channels, alpha: number | undefined, max: number): Channels | ChannelsWithAlpha {
@@ -139,7 +139,7 @@ function hsl(input: OkhslInput, alpha?: number): Channels | ChannelsWithAlpha
 function hsl(hOrInput: OkhslInput | number, sOrAlpha?: number, l?: number, alpha?: number): Channels | ChannelsWithAlpha {
   const [h, s, lightness, a] = unpackOkhsl(hOrInput, sOrAlpha, l, alpha)
   const [r, g, b] = rgb(h, s, lightness)
-  return appendAlpha(roundedHsl(rgb_to_hsl(r, g, b)), a, 100)
+  return appendAlpha(roundedHsl(rgbToHsl(r, g, b)), a, 100)
 }
 function fromRgb(r: number, g: number, b: number): Channels
 function fromRgb(r: number, g: number, b: number, alpha: number): ChannelsWithAlpha
@@ -149,7 +149,7 @@ function fromRgb(input: RgbInput, alpha: number): ChannelsWithAlpha
 function fromRgb(input: RgbInput, alpha?: number): Channels | ChannelsWithAlpha
 function fromRgb(rOrInput: RgbInput | number, gOrAlpha?: number, b?: number, alpha?: number): Channels | ChannelsWithAlpha {
   const [r, g, blue, a] = unpackRgb(rOrInput, gOrAlpha, b, alpha)
-  const result = roundedHsl(srgb_to_okhsl(clamp(r, 255), clamp(g, 255), clamp(blue, 255)))
+  const result = roundedHsl(srgbToOkhsl(clamp(r, 255), clamp(g, 255), clamp(blue, 255)))
   return appendAlpha(result, a, 100)
 }
 function fromHsl(h: number, s: number, l: number): Channels
@@ -160,8 +160,8 @@ function fromHsl(input: HslInput, alpha: number): ChannelsWithAlpha
 function fromHsl(input: HslInput, alpha?: number): Channels | ChannelsWithAlpha
 function fromHsl(hOrInput: HslInput | number, sOrAlpha?: number, l?: number, alpha?: number): Channels | ChannelsWithAlpha {
   const [h, s, lightness, a] = unpackHsl(hOrInput, sOrAlpha, l, alpha)
-  const [r, g, b] = hsl_to_rgb(hue(h) / 360, clamp(s, 100) / 100, clamp(lightness, 100) / 100)
-  return appendAlpha(roundedHsl(srgb_to_okhsl(r, g, b)), a, 100)
+  const [r, g, b] = hslToRgb(hue(h) / 360, clamp(s, 100) / 100, clamp(lightness, 100) / 100)
+  return appendAlpha(roundedHsl(srgbToOkhsl(r, g, b)), a, 100)
 }
 function fromHex(value: string): Channels | ChannelsWithAlpha {
   if (typeof value !== 'string') {

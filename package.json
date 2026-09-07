@@ -16,19 +16,12 @@
     "type": "git",
     "url": "git+https://github.com/Jaid/okhsl.git"
   },
-  "exports": {
-    ".": {
-      "types": "./src/main.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
-    }
-  },
   "imports": {
     "#src/*": "./src/*",
     "#root/*": "./*"
   },
   "scripts": {
-    "build": "bun build src/main.ts --production --target browser --format esm --outfile dist/index.js",
+    "build": "build_lib",
     "lint": "eslint . --max-warnings 0 && tsc --noEmit --noUnusedLocals --pretty false",
     "test": "bun test --max-concurrency 1 ./test",
     "validate": "bun run lint && bun run test && bun run build"

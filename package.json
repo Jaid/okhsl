@@ -2,21 +2,37 @@
   "name": "okhsl",
   "version": "0.1.0",
   "type": "module",
+  "description": "Dependency-free OkHSL to sRGB conversion with hex, CSS, byte, HSL and inverse helpers",
+  "keywords": [
+    "color",
+    "okhsl",
+    "oklab",
+    "srgb",
+    "hsl"
+  ],
+  "funding": "https://github.com/sponsors/Jaid",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/okhsl.git"
+  },
   "exports": {
     ".": {
-      "default": "./src/main.ts"
+      "types": "./src/main.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "imports": {
     "#src/*": "./src/*",
     "#root/*": "./*"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Jaid/okhsl.git"
-  },
   "scripts": {
-    "test": "bun test --max-concurrency 1 ./test"
+    "build": "bun build src/main.ts --production --target browser --format esm --outfile dist/index.js",
+    "lint": "eslint . --max-warnings 0 && tsc --noEmit --noUnusedLocals --pretty false",
+    "prepack": "bun run build",
+    "test": "bun test --max-concurrency 1 ./test",
+    "validate": "bun run lint && bun run test && bun run build"
   },
   "devDependencies": {
     "@types/bun": "1.4.1",
@@ -25,6 +41,11 @@
     "tsconfig-jaid-bun": "16.0.0",
     "typescript": "npm:typescript-classic@6.0.4"
   },
-  "funding": "https://github.com/sponsors/Jaid",
-  "license": "MIT"
+  "files": [
+    "dist",
+    "src",
+    "readme.md",
+    "license.txt"
+  ],
+  "sideEffects": false
 }

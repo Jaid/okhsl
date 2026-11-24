@@ -42,42 +42,42 @@ function hueToRgb(minimum: number, maximum: number, hue: number): number {
   return minimum
 }
 function linearToSrgb(value: number): number {
-  return value <= 0.003_130_8 ? 12.92 * value : 1.055 * value ** (1 / 2.4) - 0.055
+  return value <= 0.0031308 ? 12.92 * value : 1.055 * value ** (1 / 2.4) - 0.055
 }
 function srgbToLinear(value: number): number {
-  return value > 0.040_45 ? ((value + 0.055) / 1.055) ** 2.4 : value / 12.92
+  return value > 0.04045 ? ((value + 0.055) / 1.055) ** 2.4 : value / 12.92
 }
 function lmsToLinearSrgb(l: number, m: number, s: number): Rgb {
   return [
-    4.076_741_662_1 * l - 3.307_711_591_3 * m + 0.230_969_929_2 * s,
-    -1.268_438_004_6 * l + 2.609_757_401_1 * m - 0.341_319_396_5 * s,
-    -0.004_196_086_3 * l - 0.703_418_614_7 * m + 1.707_614_701 * s,
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
   ]
 }
 function oklabChromaDirection(a: number, b: number): Lms {
   return [
-    0.396_337_777_4 * a + 0.215_803_757_3 * b,
-    -0.105_561_345_8 * a - 0.063_854_172_8 * b,
-    -0.089_484_177_5 * a - 1.291_485_548 * b,
+    0.3963377774 * a + 0.2158037573 * b,
+    -0.1055613458 * a - 0.0638541728 * b,
+    -0.0894841775 * a - 1.291485548 * b,
   ]
 }
 function linearSrgbToOklab(red: number, green: number, blue: number): Oklab {
-  const l = 0.412_221_470_8 * red + 0.536_332_536_3 * green + 0.051_445_992_9 * blue
-  const m = 0.211_903_498_2 * red + 0.680_699_545_1 * green + 0.107_396_956_6 * blue
-  const s = 0.088_302_461_9 * red + 0.281_718_837_6 * green + 0.629_978_700_5 * blue
+  const l = 0.4122214708 * red + 0.5363325363 * green + 0.0514459929 * blue
+  const m = 0.2119034982 * red + 0.6806995451 * green + 0.1073969566 * blue
+  const s = 0.0883024619 * red + 0.2817188376 * green + 0.6299787005 * blue
   const lRoot = Math.cbrt(l)
   const mRoot = Math.cbrt(m)
   const sRoot = Math.cbrt(s)
   return [
-    0.210_454_255_3 * lRoot + 0.793_617_785 * mRoot - 0.004_072_046_8 * sRoot,
-    1.977_998_495_1 * lRoot - 2.428_592_205 * mRoot + 0.450_593_709_9 * sRoot,
-    0.025_904_037_1 * lRoot + 0.782_771_766_2 * mRoot - 0.808_675_766 * sRoot,
+    0.2104542553 * lRoot + 0.793617785 * mRoot - 0.0040720468 * sRoot,
+    1.9779984951 * lRoot - 2.428592205 * mRoot + 0.4505937099 * sRoot,
+    0.0259040371 * lRoot + 0.7827717662 * mRoot - 0.808675766 * sRoot,
   ]
 }
 function oklabToLinearSrgb(lightness: number, a: number, b: number): Rgb {
-  const lRoot = lightness + 0.396_337_777_4 * a + 0.215_803_757_3 * b
-  const mRoot = lightness - 0.105_561_345_8 * a - 0.063_854_172_8 * b
-  const sRoot = lightness - 0.089_484_177_5 * a - 1.291_485_548 * b
+  const lRoot = lightness + 0.3963377774 * a + 0.2158037573 * b
+  const mRoot = lightness - 0.1055613458 * a - 0.0638541728 * b
+  const sRoot = lightness - 0.0894841775 * a - 1.291485548 * b
   return lmsToLinearSrgb(cube(lRoot), cube(mRoot), cube(sRoot))
 }
 function toe(value: number): number {
@@ -88,13 +88,13 @@ function toeInverse(value: number): number {
   return (value * value + TOE_K1 * value) / (TOE_K3 * (value + TOE_K2))
 }
 function saturationCoefficients(a: number, b: number): SaturationCoefficients {
-  if (-1.881_703_28 * a - 0.809_364_93 * b > 1) {
-    return [1.190_862_77, 1.765_767_28, 0.596_626_41, 0.755_151_97, 0.567_712_45, 4.076_741_662_1, -3.307_711_591_3, 0.230_969_929_2]
+  if (-1.88170328 * a - 0.80936493 * b > 1) {
+    return [1.19086277, 1.76576728, 0.59662641, 0.75515197, 0.56771245, 4.0767416621, -3.3077115913, 0.2309699292]
   }
-  if (1.814_441_04 * a - 1.194_452_76 * b > 1) {
-    return [0.739_565_15, -0.459_544_04, 0.082_854_27, 0.125_410_7, 0.145_032_04, -1.268_438_004_6, 2.609_757_401_1, -0.341_319_396_5]
+  if (1.81444104 * a - 1.19445276 * b > 1) {
+    return [0.73956515, -0.45954404, 0.08285427, 0.1254107, 0.14503204, -1.2684380046, 2.6097574011, -0.3413193965]
   }
-  return [1.357_336_52, -0.009_157_99, -1.151_302_1, -0.505_596_06, 0.006_921_67, -0.004_196_086_3, -0.703_418_614_7, 1.707_614_701]
+  return [1.35733652, -0.00915799, -1.1513021, -0.50559606, 0.00692167, -0.0041960863, -0.7034186147, 1.707614701]
 }
 function computeMaximumSaturation(a: number, b: number): number {
   const [k0, k1, k2, k3, k4, weightL, weightM, weightS] = saturationCoefficients(a, b)
@@ -182,22 +182,22 @@ function getChromaBounds(lightness: number, a: number, b: number): ChromaBounds 
   const cusp = findCusp(a, b)
   const maximumChroma = findGamutIntersection(a, b, lightness, 1, lightness, cusp)
   const [maximumS, maximumT] = getMaximumST(a, b, cusp)
-  const middleS = 0.115_169_93
-    + 1 / (7.447_789_7
-      + 4.159_012_4 * b
-      + a * (-2.195_573_47
-        + 1.751_984_01 * b
-        + a * (-2.137_049_48
-          - 10.023_010_43 * b
-          + a * (-4.248_945_61 + 5.387_708_19 * b + 4.698_910_13 * a))))
-  const middleT = 0.112_396_42
-    + 1 / (1.613_203_2
-      - 0.681_243_79 * b
-      + a * (0.403_706_12
-        + 0.901_481_23 * b
-        + a * (-0.270_879_43
-          + 0.612_239_9 * b
-          + a * (0.002_992_15 - 0.453_995_68 * b - 0.146_618_72 * a))))
+  const middleS = 0.11516993
+    + 1 / (7.4477897
+      + 4.1590124 * b
+      + a * (-2.19557347
+        + 1.75198401 * b
+        + a * (-2.13704948
+          - 10.02301043 * b
+          + a * (-4.24894561 + 5.38770819 * b + 4.69891013 * a))))
+  const middleT = 0.11239642
+    + 1 / (1.6132032
+      - 0.68124379 * b
+      + a * (0.40370612
+        + 0.90148123 * b
+        + a * (-0.27087943
+          + 0.6122399 * b
+          + a * (0.00299215 - 0.45399568 * b - 0.14661872 * a))))
   const scale = maximumChroma / Math.min(lightness * maximumS, (1 - lightness) * maximumT)
   const middleChroma = 0.9 * scale * softMinimumFourth(lightness * middleS, (1 - lightness) * middleT)
   const zeroChroma = softMinimumSecond(lightness * 0.4, (1 - lightness) * 0.8)

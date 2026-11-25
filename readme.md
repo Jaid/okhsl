@@ -96,7 +96,7 @@ bun install --frozen-lockfile
 bun run validate
 ```
 
-`validate` runs ESLint, TypeScript, the Bun tests and the production build. `bun run build` writes the public entry points to `dist/main.js` and `dist/main.d.ts`.
+`validate` runs ESLint, TypeScript, the Bun tests and the production build. `bun run build` uses Bundil to create the npm package in `dist/okhsl/production/`, with `lib.js` and `lib.d.ts` as its public entry points.
 
 ## Attribution
 

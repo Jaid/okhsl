@@ -16,14 +16,8 @@
     "type": "git",
     "url": "git+https://github.com/Jaid/okhsl.git"
   },
-  "exports": {
-    ".": {
-      "types": "./dist/main.d.ts",
-      "default": "./dist/main.js"
-    }
-  },
   "scripts": {
-    "build": "bun build src/main.ts --target browser --production --outfile dist/main.js && tsc --project tsconfig.build.json",
+    "build": "bundil",
     "lint": "bunx --bun eslint . --max-warnings 0",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
@@ -37,12 +31,6 @@
     "typescript": "npm:typescript-classic@6.0.4",
     "@types/bun": "1.4.5"
   },
-  "files": [
-    "dist/main.js",
-    "dist/main.d.ts",
-    "license.txt",
-    "readme.md"
-  ],
   "packageManager": "bun@1.4.5",
   "sideEffects": false
 }

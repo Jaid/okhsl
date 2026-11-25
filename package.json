@@ -30,6 +30,7 @@
     "validate": "bun run lint && bun run typecheck && bun run test && bun run build"
   },
   "devDependencies": {
+    "bundil": "0.1.0",
     "eslint": "10.15.0",
     "eslint-config-jaid": "37.1.0",
     "tsconfig-jaid-bun": "16.0.0",

@@ -18,24 +18,15 @@ The published package ships standard ESM JavaScript plus TypeScript source for t
 import okhsl from 'okhsl'
 
 okhsl(346, 86, 67) // 'f26bbc'
-okhsl(497, 92, 67) // '65bd37'
 okhsl(213, 92, 67, 56) // '1db6d08f'
 
-okhsl.css(120, 100, 35) // '#4b5900'
-okhsl.css(115, 100, 89) // '#de0'
 okhsl.css(115, 100, 89, 100) // '#de0'
-
 okhsl.hsl(309, 76, 80) // [272, 75, 84]
-okhsl.bytes(66, 93, 67) // [226, 141, 28]
 okhsl.bytes(66, 93, 67, 120) // [226, 141, 28, 120]
 
-okhsl.fromRgb(242, 107, 188) // [346, 86, 67]
 okhsl.fromRgb(29, 182, 208, 56) // [213, 92, 67, 56]
-okhsl.fromHsl(272, 75, 84) // [309, 76, 80]
 okhsl.fromHsl(272, 75, 84, 42) // [309, 76, 80, 42]
-
 okhsl.fromHex('#de0') // [115, 100, 89]
-okhsl.fromHex('1db6d08f') // [213, 92, 67, 56]
 ```
 
 All methods are also named exports:
@@ -46,39 +37,39 @@ import {bytes, css, fromHex, fromHsl, fromRgb, hsl, okhsl} from 'okhsl'
 
 ## Input forms
 
-The conversion methods accept either positional channels, a readonly three-channel tuple, or an object:
+The channel-based methods accept positional channels, a readonly tuple or an object. For OkHSL and standard HSL inputs, omitted or `undefined` channels default independently to hue `0`, saturation `100` and lightness `50`. RGB input requires all three channels.
 
 ```ts
-okhsl(346, 86, 67)
-okhsl([346, 86, 67] as const)
-okhsl({h: 346, s: 86, l: 67})
+okhsl() // 'd70071' (OkHSL 0, 100, 50)
+okhsl(213) // '00869a'
+okhsl([undefined, 0] as const) // '777777'
+okhsl({l: 0}) // '000000'
+okhsl.fromHsl() // [29, 100, 57] (standard HSL 0, 100, 50 is sRGB red)
 
 okhsl.fromRgb([242, 107, 188] as const)
 okhsl.fromRgb({r: 242, g: 107, b: 188})
 ```
 
-Alpha is deliberately kept as a separate argument for tuple/object inputs:
+Pass alpha separately from a tuple or object. Four-channel input tuples throw `RangeError` so a byte alpha cannot be mistaken for a percentage:
 
 ```ts
 okhsl([213, 92, 67], 56)
 okhsl.bytes({h: 66, s: 93, l: 67}, 120)
 ```
 
-This avoids giving a four-element tuple two possible alpha units depending on the method.
-
 ## API
 
 | Function | Input | Output | Alpha |
 | --- | --- | --- | --- |
-| `okhsl(h, s, l, alpha?)` | OkHSL | lowercase 6/8-digit sRGB hex without `#` | percentage `0–100`, converted to a byte |
-| `okhsl.css(h, s, l, alpha?)` | OkHSL | shortest exact CSS hex | percentage `0–100`, converted to a byte |
-| `okhsl.bytes(h, s, l, alphaByte?)` | OkHSL | integer sRGB byte tuple | byte `0–255`, rounded |
-| `okhsl.hsl(h, s, l, alpha?)` | OkHSL | rounded standard sRGB HSL tuple | percentage `0–100`, preserved |
+| `okhsl(h?, s?, l?, alpha?)` | OkHSL | lowercase 6/8-digit sRGB hex without `#` | percentage `0–100`, converted to a byte |
+| `okhsl.css(h?, s?, l?, alpha?)` | OkHSL | shortest exact CSS hex | percentage `0–100`, converted to a byte |
+| `okhsl.bytes(h?, s?, l?, alphaByte?)` | OkHSL | integer sRGB byte tuple | byte `0–255`, rounded |
+| `okhsl.hsl(h?, s?, l?, alpha?)` | OkHSL | rounded standard sRGB HSL tuple | percentage `0–100`, preserved |
 | `okhsl.fromRgb(r, g, b, alpha?)` | sRGB bytes | rounded OkHSL tuple | percentage `0–100`, preserved |
-| `okhsl.fromHsl(h, s, l, alpha?)` | standard sRGB HSL | rounded OkHSL tuple | percentage `0–100`, preserved |
+| `okhsl.fromHsl(h?, s?, l?, alpha?)` | standard sRGB HSL | rounded OkHSL tuple | percentage `0–100`, preserved |
 | `okhsl.fromHex(hex)` | CSS-style 3/4/6/8-digit hex | rounded OkHSL tuple | hex byte converted to a rounded percentage |
 
-Hue inputs wrap into `[0, 360)`. Finite saturation, lightness, RGB and alpha inputs are clamped to their documented ranges. Nonfinite or nonnumeric color channels throw `RangeError`.
+Hue inputs wrap into `[0, 360)`. Finite saturation, lightness, RGB and alpha inputs are clamped to their documented ranges. After defaults are applied, nonfinite or nonnumeric channels throw `RangeError`. Invalid hex input throws `TypeError`.
 
 Inverse color channels are rounded integers. Percentage alpha supplied directly to tuple-returning methods is preserved without rounding. `fromHex()` necessarily converts its 8-bit alpha channel to the nearest integer percentage.
 

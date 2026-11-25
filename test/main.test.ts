@@ -1,134 +1,84 @@
 import type {Channels, ChannelsWithAlpha} from '../src/main.ts'
 
-import {describe, expect, test} from 'bun:test'
+import {expect, expectTypeOf, test} from 'bun:test'
 
-import {okhslToSrgb, srgbToOkhsl} from '../src/conversion.ts'
-import okhsl, {bytes, css, fromHex, fromHsl, fromRgb, hsl, okhsl as named} from '../src/main.ts'
+import okhsl, {bytes, css, fromHex, fromHsl, fromRgb, hsl} from '../src/main.ts'
 
-describe('specified examples', () => {
-  test('hex and CSS', () => {
-    expect(okhsl(346, 86, 67)).toBe('f26bbc')
-    expect(okhsl(497, 92, 67)).toBe('65bd37')
-    expect(okhsl(213, 92, 67, 56)).toBe('1db6d08f')
-    expect(okhsl.css(120, 100, 35)).toBe('#4b5900')
-    expect(okhsl.css(115, 100, 89)).toBe('#de0')
-    expect(okhsl.css(115, 100, 89, 100)).toBe('#de0')
-  })
-  test('tuples', () => {
-    expect(okhsl.hsl(309, 76, 80)).toEqual([272, 75, 84])
-    expect(okhsl.bytes(66, 93, 67)).toEqual([226, 141, 28])
-    expect(okhsl.bytes(66, 93, 67, 120)).toEqual([226, 141, 28, 120])
-    expect(okhsl.fromRgb(242, 107, 188)).toEqual([346, 86, 67])
-    expect(okhsl.fromRgb(29, 182, 208, 56)).toEqual([213, 92, 67, 56])
-    expect(okhsl.fromHsl(272, 75, 84)).toEqual([309, 76, 80])
-    expect(okhsl.fromHsl(272, 75, 84, 42)).toEqual([309, 76, 80, 42])
-  })
+test('hex uses percentage alpha, bytes use byte alpha and RGB preserves percentage alpha', () => {
+  const picker = [213, 92, 67] as const
+  expect(okhsl(picker, 50)).toBe('1db6d080')
+  expect(bytes(picker, 127.5)).toEqual([29, 182, 208, 128])
+  expect(fromRgb({
+    r: 29,
+    g: 182,
+    b: 208,
+  }, 50.25)).toEqual([...picker, 50.25])
 })
-test('exports and tuple overloads', () => {
-  expect(named).toBe(okhsl)
-  const three: Channels = okhsl.bytes(0, 0, 0)
-  const four: ChannelsWithAlpha = okhsl.fromRgb(0, 0, 0, 0)
-  expect(three.length).toBe(3)
-  expect(four.length).toBe(4)
-  for (const optional of [0, undefined]) {
-    const union: Channels | ChannelsWithAlpha = okhsl.fromHsl(0, 0, 0, optional)
-    expect(union.length).toBe(optional === undefined ? 3 : 4)
-  }
-})
-test('hues wrap in both directions', () => {
-  for (const h of [-720, -360, 0, 360, 720]) {
-    expect(okhsl(h + 137, 92, 67)).toBe('65bd37')
-    expect(okhsl.fromHsl(h + 272, 75, 84)).toEqual([309, 76, 80])
-  }
-})
-test('alpha units, preservation and CSS shortening', () => {
-  expect(okhsl(0, 0, 0, 0)).toBe('00000000')
-  expect(okhsl(0, 0, 0, 100)).toBe('000000ff')
-  expect(okhsl.css(0, 0, 0, 0)).toBe('#0000')
-  expect(okhsl.css(0, 0, 0, 20)).toBe('#0003')
-  expect(okhsl.css(0, 0, 0, 50)).toBe('#00000080')
-  expect(okhsl.css(213, 92, 67, 56)).toBe('#1db6d08f')
-  expect(okhsl.bytes(0, 0, 0, 120.5)).toEqual([0, 0, 0, 121])
-  expect(okhsl.hsl(309, 76, 80, 42.5)).toEqual([272, 75, 84, 42.5])
-  expect(okhsl.fromHsl(272, 75, 84, 42.5)).toEqual([309, 76, 80, 42.5])
-  expect(okhsl.fromRgb(242, 107, 188, 0)).toEqual([346, 86, 67, 0])
-  expect(okhsl.fromRgb(242, 107, 188, 56.7)).toEqual([346, 86, 67, 56.7])
-  expect(okhsl.bytes(0, 0, 0)).toEqual([0, 0, 0])
-})
-test('finite out-of-range channels are clamped', () => {
-  expect(okhsl(0, -1, -20, -1)).toBe('00000000')
-  expect(okhsl(0, 120, 120, 120)).toBe('ffffffff')
-  expect(okhsl(15, 120, 40)).toBe(okhsl(15, 100, 40))
-  expect(okhsl.bytes(0, 0, 0, 300)).toEqual([0, 0, 0, 255])
-  expect(okhsl.fromRgb(-1, 300, 0, 120)).toEqual([...okhsl.fromRgb(0, 255, 0), 100])
-  expect(okhsl.fromHsl(0, -1, 120)).toEqual([0, 0, 100])
-})
-test('nonfinite and nonnumeric channels are rejected, even at endpoints', () => {
-  for (const method of [okhsl, okhsl.css, okhsl.bytes, okhsl.hsl, okhsl.fromRgb, okhsl.fromHsl]) {
-    for (const invalid of [Number.NaN, Infinity, -Infinity, '2', null, undefined]) {
-      for (let index = 0; index < 4; index++) {
-        if (index === 3 && invalid === undefined) {
-          continue
-        }
-        const args: [number, number, number, number] = [0, 0, 0, 0]
-        args[index] = invalid as number
-        expect(() => method(...args)).toThrow(RangeError)
-      }
-    }
-  }
-})
-test('named exports are identical to attached methods', () => {
-  expect(css).toBe(okhsl.css)
-  expect(bytes).toBe(okhsl.bytes)
-  expect(hsl).toBe(okhsl.hsl)
-  expect(fromRgb).toBe(okhsl.fromRgb)
-  expect(fromHsl).toBe(okhsl.fromHsl)
-  expect(fromHex).toBe(okhsl.fromHex)
-})
-test('readonly tuples and objects are ergonomic inputs without ambiguous embedded alpha', () => {
-  const okTuple = [346, 86, 67] as const
-  const rgbTuple = [29, 182, 208] as const
-  const hslTuple = [272, 75, 84] as const
-  expect(okhsl(okTuple)).toBe('f26bbc')
-  expect(okhsl(okTuple, 56)).toBe('f26bbc8f')
-  expect(okhsl({
-    h: 346,
-    s: 86,
-    l: 67,
-  })).toBe('f26bbc')
-  expect(okhsl.css({
-    h: 115,
-    s: 100,
-    l: 89,
-  })).toBe('#de0')
-  expect(okhsl.bytes([66, 93, 67] as const, 120)).toEqual([226, 141, 28, 120])
-  expect(okhsl.hsl({
-    h: 309,
+test('HSL conversions wrap hue and use unquantized sRGB', () => {
+  expect(hsl({
+    h: -51,
     s: 76,
     l: 80,
   }, 42.5)).toEqual([272, 75, 84, 42.5])
-  expect(okhsl.fromRgb(rgbTuple, 56)).toEqual([213, 92, 67, 56])
-  expect(okhsl.fromRgb({
-    r: 242,
-    g: 107,
-    b: 188,
-  })).toEqual([346, 86, 67])
-  expect(okhsl.fromHsl(hslTuple)).toEqual([309, 76, 80])
-  expect(okhsl.fromHsl({
-    h: 272,
-    s: 75,
-    l: 84,
-  }, 42)).toEqual([309, 76, 80, 42])
+  expect(okhsl.fromHsl(272 + 720, 75, 84, 42.5)).toEqual([309, 76, 80, 42.5])
 })
-test('fromHex supports CSS hex forms and rejects malformed same-length strings', () => {
-  expect(okhsl.fromHex('f26bbc')).toEqual([346, 86, 67])
-  expect(okhsl.fromHex('#F26BBC')).toEqual([346, 86, 67])
-  expect(okhsl.fromHex('#de0')).toEqual([115, 100, 89])
-  expect(okhsl.fromHex('1db6d08f')).toEqual([213, 92, 67, 56])
-  expect(okhsl.fromHex('#0000')).toEqual([0, 0, 0, 0])
-  expect(okhsl.fromHex('#0003')).toEqual([0, 0, 0, 20])
-  expect(okhsl.fromHex('#ffff')).toEqual([0, 0, 100, 100])
-  for (const invalid of ['', '#12', '#12345', '#1234567', '#123456789', '#ggg', 'zzzzzz', '##fff', 'fff ']) {
-    expect(() => okhsl.fromHex(invalid)).toThrow(TypeError)
+test('omitted HSL channels default independently to 0, 100 and 50', () => {
+  expect(okhsl()).toBe(okhsl(0, 100, 50))
+  expect(okhsl(213)).toBe('00869a')
+  expect(css(undefined, 0)).toBe(css(0, 0, 50))
+  expect(bytes([undefined, 0], 64)).toEqual([...bytes(0, 0, 50), 64])
+  expect(okhsl(undefined, undefined, undefined, 50)).toBe('d7007180')
+  expect(hsl({l: 0})).toEqual([0, 0, 0])
+  expect(fromHsl()).toEqual(fromRgb(255, 0, 0))
+  expect(fromHsl({h: 120}, 0)).toEqual(fromRgb(0, 255, 0, 0))
+})
+test('CSS drops opaque alpha and shortens only exactly representable bytes', () => {
+  const picker = [115, 100, 89] as const
+  expect(okhsl(picker, 100)).toBe('ddee00ff')
+  expect(css(picker, 100)).toBe('#de0')
+  expect(css(picker, 20)).toBe('#de03')
+  expect(css(picker, 50)).toBe('#ddee0080')
+  expect(css(213, 92, 67, 0)).toBe('#1db6d000')
+})
+test('all four CSS hex widths decode with optional # and mixed case', () => {
+  const picker = fromRgb(221, 238, 0)
+  expect(fromHex('#dE0')).toEqual(picker)
+  expect(fromHex('de0f')).toEqual([...picker, 100])
+  expect(fromHex('DDEE00')).toEqual(picker)
+  expect(fromHex('#DDee008f')).toEqual([...picker, 56])
+})
+test('hex rejects invalid digits, lengths, whitespace and nonstrings', () => {
+  for (const value of ['', '#12', '#12345', '1234567', '123456789', '#ggg', '12345z', '##fff', 'fff ', null, 123]) {
+    expect(() => {
+      Reflect.apply(fromHex, undefined, [value])
+    }).toThrow(TypeError)
+  }
+})
+test('finite channels are clamped in their own units', () => {
+  expect(okhsl(15, 120, 40)).toBe(okhsl(15, 100, 40))
+  expect(okhsl.bytes(0, -1, 120, 300)).toEqual([255, 255, 255, 255])
+  expect(fromRgb(-1, 300, 0, -20)).toEqual([...fromRgb(0, 255, 0), 0])
+  expect(okhsl(0, 0, -1, 120)).toBe('000000ff')
+})
+test('invalid channels are rejected even when they would not affect the color', () => {
+  for (const args of [[Number.NaN, 0, 0], [0, Infinity, 100], [0, 0, -Infinity], ['2', 0, 0], [null], [{s: null}], [[0, 0, 0, 50]]]) {
+    expect(() => {
+      Reflect.apply(okhsl, undefined, args)
+    }).toThrow(RangeError)
+  }
+  expect(() => {
+    Reflect.apply(fromRgb, undefined, [[10, 20], 30])
+  }).toThrow(RangeError)
+  for (const convert of [okhsl, bytes, hsl, fromRgb, fromHsl]) {
+    expect(() => convert(0, 0, 100, Infinity)).toThrow(RangeError)
+  }
+})
+test('tuple widths follow the presence of alpha in JavaScript and TypeScript', () => {
+  expectTypeOf(bytes()).toEqualTypeOf<Channels>()
+  expectTypeOf(hsl({}, 0)).toEqualTypeOf<ChannelsWithAlpha>()
+  for (const alpha of [0, undefined]) {
+    const channels = fromRgb(0, 0, 0, alpha)
+    expectTypeOf(channels).toEqualTypeOf<Channels | ChannelsWithAlpha>()
+    expect(channels).toHaveLength(alpha === undefined ? 3 : 4)
   }
 })

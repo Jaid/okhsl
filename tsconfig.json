@@ -1,5 +1,11 @@
 {
-  "extends": "./node_modules/tsconfig-jaid-bun/base.json",
+  "extends": "tsconfig-jaid-bun",
+  "compilerOptions": {
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  },
   "include": [
     "eslint.config.ts",
     "src/**/*.ts",

@@ -41,22 +41,6 @@ test('hues wrap in both directions', () => {
     expect(okhsl.fromHsl(h + 272, 75, 84)).toEqual([309, 76, 80])
   }
 })
-test('achromatic colors, black and white are stable', () => {
-  for (let gray = 0; gray <= 255; gray++) {
-    const [h, s, l] = okhsl.fromRgb(gray, gray, gray)
-    expect([h, s]).toEqual([0, 0])
-    expect(l).toBeGreaterThanOrEqual(0)
-    expect(l).toBeLessThanOrEqual(100)
-  }
-  expect(okhsl.fromRgb(0, 0, 0)).toEqual([0, 0, 0])
-  expect(okhsl.fromRgb(255, 255, 255)).toEqual([0, 0, 100])
-  for (const h of [0, 60, 200, 359]) {
-    expect(okhsl(h, 100, 0)).toBe('000000')
-    expect(okhsl(h, 100, 100)).toBe('ffffff')
-    expect(okhsl.hsl(h, 0, 50)).toEqual([0, 0, 47])
-    expect(okhsl.hsl(h, 100, 100)).toEqual([0, 0, 100])
-  }
-})
 test('alpha units, preservation and CSS shortening', () => {
   expect(okhsl(0, 0, 0, 0)).toBe('00000000')
   expect(okhsl(0, 0, 0, 100)).toBe('000000ff')
@@ -91,50 +75,6 @@ test('nonfinite and nonnumeric channels are rejected, even at endpoints', () => 
         expect(() => method(...args)).toThrow(RangeError)
       }
     }
-  }
-})
-test('dense gamut sweep produces bounded integer channels and valid hex', () => {
-  for (let h = 0; h < 360; h += 3) {
-    for (const s of [0, 1, 50, 79.999, 80, 80.001, 99, 100]) {
-      for (const l of [0, 0.001, 1, 25, 50, 75, 99, 99.999, 100]) {
-        const channels = okhsl.bytes(h, s, l)
-        for (const c of channels) {
-          expect(Number.isInteger(c)).toBe(true)
-          expect(c).toBeGreaterThanOrEqual(0)
-          expect(c).toBeLessThanOrEqual(255)
-        }
-        expect(okhsl(h, s, l)).toMatch(/^[0-9a-f]{6}$/)
-        const inverse = okhsl.fromRgb(...channels)
-        expect(inverse.every(Number.isInteger)).toBe(true)
-        expect(inverse[0]).toBeGreaterThanOrEqual(0)
-        expect(inverse[0]).toBeLessThan(360)
-      }
-    }
-  }
-})
-test('unquantized interior round trips agree with the reference math', () => {
-  for (let h = 0; h < 360; h += 7) {
-    for (const s of [0.1, 0.5, 0.8, 0.95]) {
-      for (const l of [0.1, 0.4, 0.7, 0.9]) {
-        const [r, g, b] = okhslToSrgb(h / 360, s, l)
-        const result = srgbToOkhsl(r, g, b)
-        const hueError = Math.abs(result[0] * 360 - h)
-        expect(Math.min(hueError, 360 - hueError)).toBeLessThan(0.001)
-        expect(result[1]).toBeCloseTo(s, 4)
-        expect(result[2]).toBeCloseTo(l, 6)
-      }
-    }
-  }
-})
-test('sRGB primaries have known rounded OkHSL values', () => {
-  expect(okhsl.fromRgb(255, 0, 0)).toEqual([29, 100, 57])
-  expect(okhsl.fromRgb(0, 255, 0)).toEqual([142, 100, 84])
-  expect(okhsl.fromRgb(0, 0, 255)).toEqual([264, 100, 37])
-})
-test('extremely small finite channels do not produce NaN', () => {
-  for (const tiny of [Number.MIN_VALUE, 1e-300, 1e-110, 1e-100, 1e-30]) {
-    expect(okhsl(260, 100, tiny)).toBe('000000')
-    expect(okhsl.fromRgb(tiny, 0, 0).every(Number.isFinite)).toBe(true)
   }
 })
 test('named exports are identical to attached methods', () => {

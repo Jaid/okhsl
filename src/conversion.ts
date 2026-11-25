@@ -18,28 +18,8 @@ type SaturationCoefficients = readonly [
 const TOE_K1 = 0.206
 const TOE_K2 = 0.03
 const TOE_K3 = (1 + TOE_K1) / (1 + TOE_K2)
-const INVALID_HALLEY_CORRECTION = 1_000_000
 function cube(value: number): number {
   return value * value * value
-}
-function hueToRgb(minimum: number, maximum: number, hue: number): number {
-  let normalizedHue = hue
-  if (normalizedHue < 0) {
-    normalizedHue += 1
-  }
-  if (normalizedHue > 1) {
-    normalizedHue -= 1
-  }
-  if (normalizedHue < 1 / 6) {
-    return minimum + (maximum - minimum) * 6 * normalizedHue
-  }
-  if (normalizedHue < 1 / 2) {
-    return maximum
-  }
-  if (normalizedHue < 2 / 3) {
-    return minimum + (maximum - minimum) * (2 / 3 - normalizedHue) * 6
-  }
-  return minimum
 }
 function linearToSrgb(value: number): number {
   return value <= 0.0031308 ? 12.92 * value : 1.055 * value ** (1 / 2.4) - 0.055
@@ -120,32 +100,18 @@ function computeMaximumSaturation(a: number, b: number): number {
 function findCusp(a: number, b: number): Cusp {
   const maximumSaturation = computeMaximumSaturation(a, b)
   const rgbAtMaximum = oklabToLinearSrgb(1, maximumSaturation * a, maximumSaturation * b)
-  const lightness = Math.cbrt(1 / Math.max(rgbAtMaximum[0], rgbAtMaximum[1], rgbAtMaximum[2]))
+  const lightness = Math.cbrt(1 / Math.max(...rgbAtMaximum))
   return [lightness, lightness * maximumSaturation]
 }
 function halleyCorrection(value: number, firstDerivative: number, secondDerivative: number): number {
   const ratio = firstDerivative / (firstDerivative * firstDerivative - 0.5 * value * secondDerivative)
-  return ratio >= 0 ? -value * ratio : INVALID_HALLEY_CORRECTION
+  return ratio >= 0 ? -value * ratio : Infinity
 }
-function findGamutIntersection(a: number, b: number, targetLightness: number, targetChroma: number, anchorLightness: number, suppliedCusp?: Cusp): number {
-  const cusp = suppliedCusp ?? findCusp(a, b)
-  const [cuspLightness, cuspChroma] = cusp
-  const lowerHalf = (targetLightness - anchorLightness) * cuspChroma - (cuspLightness - anchorLightness) * targetChroma <= 0
-  if (lowerHalf) {
-    return cuspChroma * anchorLightness / (targetChroma * cuspLightness + cuspChroma * (anchorLightness - targetLightness))
-  }
-  let intersection = cuspChroma * (anchorLightness - 1) / (targetChroma * (cuspLightness - 1) + cuspChroma * (anchorLightness - targetLightness))
-  const lightnessDelta = targetLightness - anchorLightness
-  const chromaDelta = targetChroma
-  const [chromaDirectionL, chromaDirectionM, chromaDirectionS] = oklabChromaDirection(a, b)
-  const derivativeL = lightnessDelta + chromaDelta * chromaDirectionL
-  const derivativeM = lightnessDelta + chromaDelta * chromaDirectionM
-  const derivativeS = lightnessDelta + chromaDelta * chromaDirectionS
-  const lightness = anchorLightness * (1 - intersection) + intersection * targetLightness
-  const chroma = intersection * targetChroma
-  const lRoot = lightness + chroma * chromaDirectionL
-  const mRoot = lightness + chroma * chromaDirectionM
-  const sRoot = lightness + chroma * chromaDirectionS
+function refineUpperChroma(lightness: number, chroma: number, a: number, b: number): number {
+  const [derivativeL, derivativeM, derivativeS] = oklabChromaDirection(a, b)
+  const lRoot = lightness + chroma * derivativeL
+  const mRoot = lightness + chroma * derivativeM
+  const sRoot = lightness + chroma * derivativeS
   const l = cube(lRoot)
   const m = cube(mRoot)
   const s = cube(sRoot)
@@ -161,12 +127,7 @@ function findGamutIntersection(a: number, b: number, targetLightness: number, ta
   const redCorrection = halleyCorrection(red - 1, redFirst, redSecond)
   const greenCorrection = halleyCorrection(green - 1, greenFirst, greenSecond)
   const blueCorrection = halleyCorrection(blue - 1, blueFirst, blueSecond)
-  intersection += Math.min(redCorrection, Math.min(greenCorrection, blueCorrection))
-  return intersection
-}
-function getMaximumST(a: number, b: number, suppliedCusp?: Cusp): [number, number] {
-  const [lightness, chroma] = suppliedCusp ?? findCusp(a, b)
-  return [chroma / lightness, chroma / (1 - lightness)]
+  return chroma + Math.min(redCorrection, greenCorrection, blueCorrection)
 }
 function softMinimumFourth(first: number, second: number): number {
   const minimum = Math.min(first, second)
@@ -179,9 +140,11 @@ function softMinimumSecond(first: number, second: number): number {
   return minimum / Math.hypot(1, minimum / maximum)
 }
 function getChromaBounds(lightness: number, a: number, b: number): ChromaBounds {
-  const cusp = findCusp(a, b)
-  const maximumChroma = findGamutIntersection(a, b, lightness, 1, lightness, cusp)
-  const [maximumS, maximumT] = getMaximumST(a, b, cusp)
+  const [cuspLightness, cuspChroma] = findCusp(a, b)
+  // At constant lightness, the lower edge of the cusp triangle is exact; only its upper edge needs refinement.
+  const lower = lightness <= cuspLightness
+  const triangleChroma = lower ? lightness * (cuspChroma / cuspLightness) : (1 - lightness) * (cuspChroma / (1 - cuspLightness))
+  const maximumChroma = lower ? triangleChroma : refineUpperChroma(lightness, triangleChroma, a, b)
   const middleS = 0.11516993
     + 1 / (7.4477897
       + 4.1590124 * b
@@ -198,7 +161,7 @@ function getChromaBounds(lightness: number, a: number, b: number): ChromaBounds 
         + a * (-0.27087943
           + 0.6122399 * b
           + a * (0.00299215 - 0.45399568 * b - 0.14661872 * a))))
-  const scale = maximumChroma / Math.min(lightness * maximumS, (1 - lightness) * maximumT)
+  const scale = maximumChroma / triangleChroma
   const middleChroma = 0.9 * scale * softMinimumFourth(lightness * middleS, (1 - lightness) * middleT)
   const zeroChroma = softMinimumSecond(lightness * 0.4, (1 - lightness) * 0.8)
   return [zeroChroma, middleChroma, maximumChroma]
@@ -251,33 +214,27 @@ function rgbToHsl(redByte: number, greenByte: number, blueByte: number): Hsl {
   return [hue / 6, saturation, lightness]
 }
 function hslToRgb(hue: number, saturation: number, lightness: number): Rgb {
-  if (saturation === 0) {
-    const gray = lightness * 255
-    return [gray, gray, gray]
+  // The CSS Color 4 formula avoids cancellation at white (https://drafts.csswg.org/css-color-4/#hsl-to-rgb).
+  const amplitude = saturation * Math.min(lightness, 1 - lightness)
+  const channel = (offset: number) => {
+    const k = (offset + 12 * hue) % 12
+    return 255 * (lightness - amplitude * Math.max(-1, Math.min(k - 3, 9 - k, 1)))
   }
-  const maximum = lightness < 0.5 ? lightness * (1 + saturation) : lightness + saturation - lightness * saturation
-  const minimum = 2 * lightness - maximum
-  return [
-    hueToRgb(minimum, maximum, hue + 1 / 3) * 255,
-    hueToRgb(minimum, maximum, hue) * 255,
-    hueToRgb(minimum, maximum, hue - 1 / 3) * 255,
-  ]
+  return [channel(0), channel(8), channel(4)]
 }
 function okhslToSrgb(hue: number, saturation: number, lightness: number): Rgb {
-  if (lightness === 1) {
+  const perceptualLightness = toeInverse(lightness)
+  if (perceptualLightness >= 1) {
     return [255, 255, 255]
   }
-  if (lightness < 1e-110) {
-    return [0, 0, 0]
+  const luminance = cube(perceptualLightness)
+  if (saturation === 0 || luminance === 0) {
+    const gray = 255 * linearToSrgb(luminance)
+    return [gray, gray, gray]
   }
   const angle = 2 * Math.PI * hue
   const directionA = Math.cos(angle)
   const directionB = Math.sin(angle)
-  const perceptualLightness = toeInverse(lightness)
-  if (saturation === 0) {
-    const gray = 255 * linearToSrgb(perceptualLightness ** 3)
-    return [gray, gray, gray]
-  }
   const [zeroChroma, middleChroma, maximumChroma] = getChromaBounds(perceptualLightness, directionA, directionB)
   const chroma = saturationToChroma(saturation, zeroChroma, middleChroma, maximumChroma)
   const [red, green, blue] = oklabToLinearSrgb(perceptualLightness, chroma * directionA, chroma * directionB)

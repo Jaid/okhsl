@@ -92,18 +92,7 @@ CSS output instead removes redundant opaque alpha, then uses `#rgb` or `#rgba` s
 
 ## Numerical behavior
 
-The implementation follows Björn Ottosson's reference OkHSL gamut approximation, Oklab matrices and sRGB transfer functions.
-
-The numerical core additionally hardens several edge cases that are easy to miss in direct ports:
-
-- exact sRGB grays use canonical hue `0` and saturation `0`
-- forward achromatic colors avoid unnecessary gamut-cusp calculations
-- zero chroma is guarded explicitly in inverse conversion
-- soft-minimum calculations use ratio-based equivalents that remain finite for extremely small values
-- vanishingly small lightness values have a stable black endpoint
-- HSL conversion uses unrounded sRGB values internally
-
-Final sRGB channels are clipped to the displayable range before byte quantization. Integer conversion is inherently lossy, so RGB → rounded OkHSL → RGB is not guaranteed to reproduce the original bytes exactly.
+Exact sRGB grays use hue `0` and saturation `0`. HSL conversion uses unrounded sRGB channels. Hex and byte output clip to the displayable sRGB range before rounding. Conversion through integer OkHSL is lossy: RGB → rounded OkHSL → RGB need not reproduce the original bytes.
 
 ## Validation
 

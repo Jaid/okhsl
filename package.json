@@ -16,15 +16,18 @@
     "type": "git",
     "url": "git+https://github.com/Jaid/okhsl.git"
   },
-  "imports": {
-    "#src/*": "./src/*",
-    "#root/*": "./*"
+  "exports": {
+    ".": {
+      "types": "./dist/main.d.ts",
+      "default": "./dist/main.js"
+    }
   },
   "scripts": {
-    "build": "build_lib --terser-strength max",
-    "lint": "eslint . --max-warnings 0 && tsc --noEmit --noUnusedLocals --pretty false",
-    "test": "bun test --max-concurrency 1 ./test",
-    "validate": "bun run lint && bun run test && bun run build"
+    "build": "bun build src/main.ts --target browser --production --outfile dist/main.js && tsc --project tsconfig.build.json",
+    "lint": "bunx --bun eslint . --max-warnings 0",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "validate": "bun run lint && bun run typecheck && bun run test && bun run build"
   },
   "devDependencies": {
     "eslint": "10.15.0",
@@ -34,10 +37,11 @@
     "@types/bun": "1.4.5"
   },
   "files": [
-    "dist",
-    "src",
-    "readme.md",
-    "license.txt"
+    "dist/main.js",
+    "dist/main.d.ts",
+    "license.txt",
+    "readme.md"
   ],
+  "packageManager": "bun@1.4.5",
   "sideEffects": false
 }

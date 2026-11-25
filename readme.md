@@ -10,7 +10,7 @@ OkHSL is a perceptual color-picker space built on Oklab. Unlike ordinary HSL, eq
 bun add okhsl
 ```
 
-The published package ships standard ESM JavaScript plus TypeScript source for types. It has no runtime dependencies.
+The published package ships browser-compatible ESM and TypeScript declarations. It has no runtime dependencies.
 
 ## Usage
 
@@ -89,37 +89,14 @@ CSS output instead removes redundant opaque alpha, then uses `#rgb` or `#rgba` s
 
 Exact sRGB grays use hue `0` and saturation `0`. HSL conversion uses unrounded sRGB channels. Hex, integer and byte output clip to the displayable sRGB range before rounding. Conversion through integer OkHSL is lossy: RGB → rounded OkHSL → RGB need not reproduce the original bytes.
 
-## Validation
-
-The test suite covers the documented examples plus:
-
-- all 256 exact integer grays
-- known sRGB primaries
-- positive and negative hue wrapping
-- alpha-unit and CSS-shortening semantics
-- readonly tuple and object input forms
-- malformed hex strings, including valid-length non-hex input
-- nonfinite and out-of-range values
-- dense gamut sweeps around the OkHSL saturation transition
-- unquantized forward/inverse round trips
-- extremely small finite values
-
-Run the complete release validation with:
-
-```sh
-bun run validate
-```
-
 ## Development
 
 ```sh
-bun install
-bun run lint
-bun run test
-bun run build
+bun install --frozen-lockfile
+bun run validate
 ```
 
-`bun run build` writes the browser-compatible ESM bundle to `dist/index.js`.
+`validate` runs ESLint, TypeScript, the Bun tests and the production build. `bun run build` writes the public entry points to `dist/main.js` and `dist/main.d.ts`.
 
 ## Attribution
 

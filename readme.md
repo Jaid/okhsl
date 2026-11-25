@@ -21,6 +21,8 @@ okhsl(346, 86, 67) // 'f26bbc'
 okhsl(213, 92, 67, 56) // '1db6d08f'
 
 okhsl.css(115, 100, 89, 100) // '#de0'
+okhsl.integer(346, 86, 67) // 0xf26bbc
+okhsl.integer(346, 86, 67, 50) // 0xf26bbc80
 okhsl.hsl(309, 76, 80) // [272, 75, 84]
 okhsl.bytes(66, 93, 67, 120) // [226, 141, 28, 120]
 
@@ -32,7 +34,7 @@ okhsl.fromHex('#de0') // [115, 100, 89]
 All methods are also named exports:
 
 ```ts
-import {bytes, css, fromHex, fromHsl, fromRgb, hsl, okhsl} from 'okhsl'
+import {bytes, css, fromHex, fromHsl, fromRgb, hsl, integer, okhsl} from 'okhsl'
 ```
 
 ## Input forms
@@ -55,6 +57,7 @@ Pass alpha separately from a tuple or object. Four-channel input tuples throw `R
 ```ts
 okhsl([213, 92, 67], 56)
 okhsl.bytes({h: 66, s: 93, l: 67}, 120)
+okhsl.integer({}, 50) // 0xd7007180
 ```
 
 ## API
@@ -63,6 +66,7 @@ okhsl.bytes({h: 66, s: 93, l: 67}, 120)
 | --- | --- | --- | --- |
 | `okhsl(h?, s?, l?, alpha?)` | OkHSL | lowercase 6/8-digit sRGB hex without `#` | percentage `0–100`, converted to a byte |
 | `okhsl.css(h?, s?, l?, alpha?)` | OkHSL | shortest exact CSS hex | percentage `0–100`, converted to a byte |
+| `okhsl.integer(h?, s?, l?, alpha?)` | OkHSL | unsigned `number` in `0xRRGGBB` or `0xRRGGBBAA` order | percentage `0–100`, converted to a byte |
 | `okhsl.bytes(h?, s?, l?, alphaByte?)` | OkHSL | integer sRGB byte tuple | byte `0–255`, rounded |
 | `okhsl.hsl(h?, s?, l?, alpha?)` | OkHSL | rounded standard sRGB HSL tuple | percentage `0–100`, preserved |
 | `okhsl.fromRgb(r, g, b, alpha?)` | sRGB bytes | rounded OkHSL tuple | percentage `0–100`, preserved |
@@ -73,7 +77,7 @@ Hue inputs wrap into `[0, 360)`. Finite saturation, lightness, RGB and alpha inp
 
 Inverse color channels are rounded integers. Percentage alpha supplied directly to tuple-returning methods is preserved without rounding. `fromHex()` necessarily converts its 8-bit alpha channel to the nearest integer percentage.
 
-The main hex function preserves an explicitly supplied opaque alpha:
+Hex and integer output preserve an explicitly supplied opaque alpha:
 
 ```ts
 okhsl(213, 92, 67, 100) // '1db6d0ff'
@@ -83,7 +87,7 @@ CSS output instead removes redundant opaque alpha, then uses `#rgb` or `#rgba` s
 
 ## Numerical behavior
 
-Exact sRGB grays use hue `0` and saturation `0`. HSL conversion uses unrounded sRGB channels. Hex and byte output clip to the displayable sRGB range before rounding. Conversion through integer OkHSL is lossy: RGB → rounded OkHSL → RGB need not reproduce the original bytes.
+Exact sRGB grays use hue `0` and saturation `0`. HSL conversion uses unrounded sRGB channels. Hex, integer and byte output clip to the displayable sRGB range before rounding. Conversion through integer OkHSL is lossy: RGB → rounded OkHSL → RGB need not reproduce the original bytes.
 
 ## Validation
 

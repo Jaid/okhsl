@@ -2,7 +2,7 @@ import type {Channels, ChannelsWithAlpha} from '../src/main.ts'
 
 import {expect, expectTypeOf, test} from 'bun:test'
 
-import okhsl, {bytes, css, fromHex, fromHsl, fromRgb, hsl} from '../src/main.ts'
+import okhsl, {bytes, css, fromHex, fromHsl, fromRgb, hsl, integer} from '../src/main.ts'
 
 test('hex uses percentage alpha, bytes use byte alpha and RGB preserves percentage alpha', () => {
   const picker = [213, 92, 67] as const
@@ -31,6 +31,12 @@ test('omitted HSL channels default independently to 0, 100 and 50', () => {
   expect(hsl({l: 0})).toEqual([0, 0, 0])
   expect(fromHsl()).toEqual(fromRgb(255, 0, 0))
   expect(fromHsl({h: 120}, 0)).toEqual(fromRgb(0, 255, 0, 0))
+})
+test('integer packs unsigned sRGB with optional trailing percentage alpha', () => {
+  expect(integer(213, 92, 67)).toBe(0x1D_B6_D0)
+  expect(okhsl.integer([346, 86, 67], 50)).toBe(0xF2_6B_BC_80)
+  expect(integer([], 0)).toBe(0xD7_00_71_00)
+  expect(integer({l: 100}, 100)).toBe(0xFF_FF_FF_FF)
 })
 test('CSS drops opaque alpha and shortens only exactly representable bytes', () => {
   const picker = [115, 100, 89] as const
@@ -69,7 +75,7 @@ test('invalid channels are rejected even when they would not affect the color', 
   expect(() => {
     Reflect.apply(fromRgb, undefined, [[10, 20], 30])
   }).toThrow(RangeError)
-  for (const convert of [okhsl, bytes, hsl, fromRgb, fromHsl]) {
+  for (const convert of [okhsl, bytes, hsl, integer, fromRgb, fromHsl]) {
     expect(() => convert(0, 0, 100, Infinity)).toThrow(RangeError)
   }
 })

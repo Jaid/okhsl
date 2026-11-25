@@ -107,10 +107,17 @@ function rgbBytes(h: number, s: number, l: number): Channels {
 function roundedHsl([h, s, l]: Channels): Channels {
   return [Math.round(h * 360) % 360, Math.round(clamp(s * 100, 100)), Math.round(clamp(l * 100, 100))]
 }
+function pack([h, s, l, alpha]: Unpacked): number {
+  const [r, g, b] = rgbBytes(h, s, l)
+  const value = (r * 256 + g) * 256 + b
+  return alpha === undefined ? value : value * 256 + Math.round(clamp(alpha, 100) * 255 / 100)
+}
+function integer(...args: HslArgs): number {
+  return pack(unpackHsl(args))
+}
 function hex(...args: HslArgs): string {
-  const [h, s, l, alpha] = unpackHsl(args)
-  const channels = rgbBytes(h, s, l)
-  return Uint8Array.from(alpha === undefined ? channels : [...channels, Math.round(clamp(alpha, 100) * 255 / 100)]).toHex()
+  const channels = unpackHsl(args)
+  return pack(channels).toString(16).padStart(channels[3] === undefined ? 6 : 8, '0')
 }
 function css(...args: HslArgs): string {
   let value = hex(...args)
@@ -146,7 +153,8 @@ const okhsl = Object.assign(hex, {
   fromHsl,
   fromRgb,
   hsl,
+  integer,
 })
 
-export {bytes, css, fromHex, fromHsl, fromRgb, hsl, okhsl}
+export {bytes, css, fromHex, fromHsl, fromRgb, hsl, integer, okhsl}
 export default okhsl

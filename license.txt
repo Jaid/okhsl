@@ -1,6 +1,8 @@
 MIT License
 
 Copyright © 2026, Jaid <jaid.jsx@gmail.com> (https://github.com/jaid)
+Copyright (c) 2022 Brian Holbrook
+Copyright (c) 2021 Björn Ottosson
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -139,9 +139,7 @@ bun run build
 
 ## Attribution
 
-The numerical conversion core is adapted from [Björn Ottosson's OkHSL color-picker reference implementation](https://bottosson.github.io/posts/colorpicker) using the TypeScript port by Brian Holbrook from [Ok Color Picker](https://github.com/holbrookdev/ok-color-picker). Its original MIT copyright and permission notice are retained in `src/conversion.ts`.
-
-Independent implementations from [Color.js](https://github.com/color-js/color.js), [ColorAide](https://github.com/facelessuser/coloraide) and [Kornel Lesiński's Oklab repository](https://gitlab.com/kornelski/oklab) are useful cross-references for the color-space behavior.
+The numerical core is adapted from [Björn Ottosson’s OkHSL reference implementation](https://bottosson.github.io/posts/colorpicker/) via [Brian Holbrook’s TypeScript port](https://github.com/holbrookdev/ok-color-picker). Both copyright notices are included in [`license.txt`](license.txt).
 
 ## License
 
